@@ -2,10 +2,10 @@ import os
 import tweepy as tw
 import pandas as pd
 
-consumer_key= 'CVgMPLWl3fcIrDxZ9hDZfrl8O'
-consumer_secret= 'Mzi3X0ZgAwJh1ZIsIX2pVRBlIEa5jiSi4W1BP6LcxdYhdPnlTK'
-access_token= '1196943821776588800-h3jbQkR78bCOSfyoraNWyIfAoNqbMe'
-access_token_secret= 'mqPMfI0GOaMkLQTNdLpJk8yygqDT8x1lpyUa5YQpRYfEv'
+consumer_key= '???'
+consumer_secret= '???'
+access_token= '???'
+access_token_secret= '???'
 
 def get_all_tweets(screen_name):
     # Twitter only allows access to a users most recent 3240 tweets with this method (??? not for me)
