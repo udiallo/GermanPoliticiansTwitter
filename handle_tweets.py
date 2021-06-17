@@ -27,7 +27,7 @@ def get_all_tweets(screen_name):
 
     # keep grabbing tweets until there are no tweets left to grab
     while len(new_tweets) > 0:
-        print("getting tweets before %s" % (oldest))
+        # print("getting tweets before %s" % (oldest))
 
         # all subsiquent requests use the max_id param to prevent duplicates
         # save most recent tweets
@@ -37,7 +37,7 @@ def get_all_tweets(screen_name):
         # update the id of the oldest tweet less one
         oldest = alltweets[-1].id - 1
 
-        print("...%s tweets downloaded so far" % (len(alltweets)))
+        # print("...%s tweets downloaded so far" % (len(alltweets)))
         if len(alltweets) > max_number_of_tweets:
             break
 
@@ -72,13 +72,28 @@ def tweets_to_pandas(list_of_tweets):
 
 ########################################################################################################################
 ## Main ##
-users_of_interest = ["jensspahn", "CDUMerkel", "c_lindner", "ob_palmer", "HGMaassen", "Si_Wagenknecht", "ABaerbock", "Karl_Lauterbach", "Markus_Soeder",] # "Die_Gruenen",
-                     # "fdp", "spdde", "dieLinke", "CDU", "AfDBerlin"]
+users_of_interest = ["Die_Gruenen", "ob_palmer", "ABaerbock", "sven_giegold", "MiKellner", "jamila_anna",
+                     "spdde",  "Karl_Lauterbach", "OlafScholz", "NowaboFM", "HeikoMaas", "Doro_Martin",
+                     "dieLinke", "Janine_Wissler", "JoergSchindler", "SusanneHennig", "Si_Wagenknecht", "DietmarBartsch",
+                     "CDU", "jensspahn", "CDUMerkel", "Markus_Soeder", "HGMaassen", "PaulZiemiak",
+                     "AfD", "BjoernHoecke", "Tino_Chrupalla", "Alice_Weidel", "Beatrix_vStorch", "M_HarderKuehnel",
+                     "c_lindner", "Wissing", "johannesvogel", "moritzkoerner", "MarcoBuschmann"] #fdp
 max_number_of_tweets = 10000 # per user
 
+import requests
 list_of_tweets = []
-for user in users_of_interest:
-    list_of_tweets.extend(get_all_tweets(user)) # get tweets from all users of interest
+from tqdm import tqdm
+for user in tqdm(users_of_interest):
+    print(user)
+    try:
+        list_of_tweets.extend(get_all_tweets(user)) # get tweets from all users of interest
+    except requests.exceptions.RequestException as e:  # This is the correct syntax
+        print("Connection Error, try once again")
+        try:
+            list_of_tweets.extend(get_all_tweets(user))  # get tweets from all users of interest
+        except requests.exceptions.RequestException as e:  # This is the correct syntax
+            print("Connection Error again, skipping " + user)
+
 df = tweets_to_pandas(list_of_tweets) # convert tweets to dataframe
 
 df.to_pickle("data/german_politicans_tweets.pkl")

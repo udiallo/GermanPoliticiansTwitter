@@ -114,10 +114,12 @@ def clean_text(text, for_embedding=False):
         RE_ASCII = re.compile(r"[^A-Za-zÀ-ž,.!? ]", re.IGNORECASE)
         RE_SINGLECHAR = re.compile(r"\b[A-Za-zÀ-ž,.!?]\b", re.IGNORECASE)
 
+    text = remove_urls(text)
     text = re.sub(RE_TAGS, " ", text)
     text = re.sub(RE_ASCII, " ", text)
     text = re.sub(RE_SINGLECHAR, " ", text)
     text = re.sub(RE_WSPACE, " ", text)
+
 
     word_tokens = word_tokenize(text)
     words_tokens_lower = [word.lower() for word in word_tokens]
@@ -142,6 +144,7 @@ df = df[df["retweeted"] == False]
 df = df.reset_index(drop=True)
 df2 = df.copy()
 df2["text_processed"] = ""
+df2["text_lemmatized"] = ""
 df2["spacy_feature"] = np.empty((len(df), 0)).tolist()
 df2["glove_feature"] = np.empty((len(df), 0)).tolist()
 df2["all_features"] = np.empty((len(df), 0)).tolist()
@@ -150,8 +153,10 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0]):
     new_text = clean_text(text, for_embedding=True)
     text_string, text_vec = preprocessing(text)
     df2.at[index, "text_processed"] = text_string
-    doc = nlp(new_text)
+    doc = nlp(text_string)
     spacy_feature = doc.vector
+    text_lemmatized = ' '.join([x.lemma_ for x in doc])
+    df2.at[index, "text_lemmatized"] = text_lemmatized
     df2.at[index, "spacy_feature"] = spacy_feature
     glove_average_embedding = [0] * 300
     for word in text_vec:
@@ -160,8 +165,6 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0]):
             glove_average_embedding = [a + b for a, b in zip(glove_average_embedding, glove_for_word)]
 
     df2.at[index, "glove_feature"] = glove_average_embedding
-
-
     df2.at[index, "all_features"] = np.concatenate((spacy_feature, glove_average_embedding ), axis=None)
 
 df2 = df2[df2["retweeted"] == False]
