@@ -8,9 +8,10 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
-df = pd.read_pickle("german_politicans_tweets_with_features.pkl")
+df = pd.read_pickle("data/german_politicans_tweets_with_features.pkl")
 
 feature_selection = "all_features"
+number_of_label = df['user'].nunique()
 d = []
 for index, row in df.iterrows():
     d.append((row[feature_selection], row["user"]))
@@ -37,14 +38,14 @@ dummy_y = np_utils.to_categorical(encoded_Y)
 def baseline_model():
 	# create model
 	model = Sequential()
-	model.add(Dense(32, input_dim=len(df[feature_selection][9]), activation='relu'))
+	model.add(Dense(16, input_dim=len(df[feature_selection][9]), activation='relu'))
 	model.add(Dense(32, activation='relu')),
-	model.add(Dense(3, activation='softmax')),
+	model.add(Dense(number_of_label, activation='softmax')),
 	# Compile model
 	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 	return model
 
-estimator = KerasClassifier(build_fn=baseline_model, epochs=100, batch_size=5, verbose=0)
+estimator = KerasClassifier(build_fn=baseline_model, epochs=30, batch_size=5, verbose=0)
 kfold = KFold(n_splits=10, shuffle=True)
 results = cross_val_score(estimator, X_train, dummy_y, cv=kfold)
 print("Baseline: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))

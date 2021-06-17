@@ -2,10 +2,10 @@ import os
 import tweepy as tw
 import pandas as pd
 
-consumer_key= '???'
-consumer_secret= '???'
-access_token= '???'
-access_token_secret= '???'
+consumer_key= 'CVgMPLWl3fcIrDxZ9hDZfrl8O'
+consumer_secret= 'Mzi3X0ZgAwJh1ZIsIX2pVRBlIEa5jiSi4W1BP6LcxdYhdPnlTK'
+access_token= '1196943821776588800-h3jbQkR78bCOSfyoraNWyIfAoNqbMe'
+access_token_secret= 'mqPMfI0GOaMkLQTNdLpJk8yygqDT8x1lpyUa5YQpRYfEv'
 
 def get_all_tweets(screen_name):
     # Twitter only allows access to a users most recent 3240 tweets with this method (??? not for me)
@@ -48,10 +48,13 @@ def get_all_tweets(screen_name):
 def tweets_to_pandas(list_of_tweets):
     columns = ["user", "id", "text", "entities", "retweet_count", "favorite_count", "retweeted"]
     tweets_frame = []
+    list_of_ids = []
     for tweet in list_of_tweets:
         # print(tweet._json['retweeted_status']['full_text'])
         try:
             if hasattr(tweet, 'full_text'):
+                if tweet.id in list_of_ids:
+                    continue
                 if tweet.full_text[0:2] == "RT":
                     # text = 'RT ' + tweet._json['retweeted_status']['full_text']
                     data = [tweet.user.screen_name, tweet.id, "RT " + tweet._json['retweeted_status']['full_text'], tweet.entities, tweet.retweet_count,
@@ -59,6 +62,7 @@ def tweets_to_pandas(list_of_tweets):
                 else:
                     data = [tweet.user.screen_name, tweet.id, tweet.full_text, tweet.entities, tweet.retweet_count,
                             tweet.favorite_count, False]
+            list_of_ids.append(tweet.id)
             tweets_frame.append(data)
         except tw.TweepError as e:
             print(e.reason)
@@ -68,16 +72,16 @@ def tweets_to_pandas(list_of_tweets):
 
 ########################################################################################################################
 ## Main ##
-users_of_interest = ["jensspahn", "CDUMerkel", "c_lindner", "ob_palmer", "HGMaassen", "Si_Wagenknecht", "ABaerbock", "Karl_Lauterbach", "Markus_Soeder", "Die_Gruenen",
-                     "fdp", "spdde", "dieLinke", "CDU", "AfDBerlin"]
-max_number_of_tweets = 2000 # per user
+users_of_interest = ["jensspahn", "CDUMerkel", "c_lindner", "ob_palmer", "HGMaassen", "Si_Wagenknecht", "ABaerbock", "Karl_Lauterbach", "Markus_Soeder",] # "Die_Gruenen",
+                     # "fdp", "spdde", "dieLinke", "CDU", "AfDBerlin"]
+max_number_of_tweets = 10000 # per user
 
 list_of_tweets = []
 for user in users_of_interest:
     list_of_tweets.extend(get_all_tweets(user)) # get tweets from all users of interest
 df = tweets_to_pandas(list_of_tweets) # convert tweets to dataframe
 
-df.to_pickle("german_politicans_tweets.pkl")
+df.to_pickle("data/german_politicans_tweets.pkl")
 
 
 
