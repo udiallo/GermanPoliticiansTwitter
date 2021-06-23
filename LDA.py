@@ -7,19 +7,58 @@ from nltk.stem.porter import *
 import numpy as np
 np.random.seed(400)
 
-df = pd.read_pickle("data/german_politicans_tweets_with_features.pkl")
+df1 = pd.read_pickle("data/german_politicans_tweets_with_features.pkl")
+
+# Create "partei" label
+users_gruen = ["Die_Gruenen", "ob_palmer", "ABaerbock", "sven_giegold", "MiKellner", "jamila_anna"]
+users_spde =                   ["spdde",  "Karl_Lauterbach", "OlafScholz", "NowaboFM", "HeikoMaas", "Doro_Martin"]
+users_linke = ["dieLinke", "Janine_Wissler", "JoergSchindler", "SusanneHennig", "Si_Wagenknecht", "DietmarBartsch"]
+users_cdu = ["CDU", "jensspahn", "CDUMerkel", "Markus_Soeder", "HGMaassen", "PaulZiemiak"]
+users_afd = ["AfD", "BjoernHoecke", "Tino_Chrupalla", "Alice_Weidel", "Beatrix_vStorch", "M_HarderKuehnel"]
+users_fdp = ["c_lindner", "Wissing", "johannesvogel", "moritzkoerner", "MarcoBuschmann"] #fdp
+
+df1["partei"] = ""
+for index, row in df1.iterrows():
+    if row["user"] in users_gruen:
+       df1.at[index, "partei"] = "diegruenen"
+    elif row["user"] in users_spde:
+       df1.at[index, "partei"] = "spd"
+    elif row["user"] in users_linke:
+       df1.at[index, "partei"] = "dielinke"
+    elif row["user"] in users_cdu:
+       df1.at[index, "partei"] = "cdu"
+    elif row["user"] in users_afd:
+       df1.at[index, "partei"] = "afd"
+    elif row["user"] in users_fdp:
+       df1.at[index, "partei"] = "fdp"
+
+# Exclude jensspahn and merkel as there are only very few samples available
+df1 = df1[df1.user != "jensspahn"]
+df1 = df1[df1.user != "CDUMerkel"]
+df = df1
+
+
+
 number_of_label = df['user'].nunique()
-col_select = "text"
+col_select = "text_lemmatized"
+label_select = "partei"
 d = []
-size_train_set = len(df.index) / 2
+size_train_set = int(len(df.index) / 3)
 test_set = []
 for index, row in df.iterrows():
     if index > size_train_set:
-        test_set.append((row[col_select], row["user"]))
+        test_set.append((row[col_select], row[label_select]))
     else:
-        d.append((row[col_select], row["user"]))
-X_train = [x[0] for x in d] # Text
-X_train = np.zeros((len(X_train), len(X_train[0])))
+        d.append((row[col_select], row[label_select]))
+
+from nltk.tokenize import word_tokenize
+X = [x[0] for x in d] # Text
+X_train = []
+for i in X:
+    text = word_tokenize(i)
+    X_train.append(text)
+
+# X_train = np.zeros((len(X_train), len(X_train[0])))
 Y_train = [y[1] for y in d] # Label
 
 X_test = [x[0] for x in test_set] # Text
@@ -27,7 +66,7 @@ X_test = np.zeros((len(X_test), len(X_test[0])))
 Y_test = [y[1] for y in test_set] # Label
 
 processed_docs = X_train
-dictionary = gensim.corpora.Dictionary()
+dictionary = gensim.corpora.Dictionary(processed_docs)
 
 count = 0
 for k, v in dictionary.iteritems():
@@ -44,7 +83,7 @@ Remove very rare and very common words:
 - words appearing less than 15 times
 - words appearing in more than 10% of all documents
 '''
-dictionary.filter_extremes(no_below=15, no_above=0.1, keep_n= 100000)
+# dictionary.filter_extremes(no_below=15, no_above=0.1, keep_n= 100000)
 
 
 '''
@@ -56,7 +95,7 @@ bow_corpus = [dictionary.doc2bow(doc) for doc in processed_docs]
 '''
 Preview BOW for our sample preprocessed document
 '''
-document_num = 20
+document_num = int(size_train_set)
 bow_doc_x = bow_corpus[document_num]
 
 for i in range(len(bow_doc_x)):
@@ -68,7 +107,7 @@ Train your lda model using gensim.models.LdaMulticore and save it to 'lda_model'
 '''
 # TODO
 lda_model =  gensim.models.LdaMulticore(bow_corpus,
-                                   num_topics = 8,
+                                   num_topics = 3,
                                    id2word = dictionary,
                                    passes = 10,
                                    workers = 2)
